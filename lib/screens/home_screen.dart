@@ -5,6 +5,8 @@ import 'welfare_screen.dart';
 import 'jobs_screen.dart';
 import 'shopping_screen.dart';
 import 'welfare_detail_screen.dart';
+import 'ai_health_check_screen.dart';
+import 'my_page_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -15,17 +17,46 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('온고지신'),
         actions: [
+          // Bell Icon with Red Dot
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined, size: 32),
+                onPressed: () {
+                   Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const WelfareScreen()),
+                  );
+                },
+                tooltip: '알림',
+              ),
+              Positioned(
+                right: 12, // Adjusted for icon size
+                top: 12,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          
+          // My Page Icon
           IconButton(
-            icon: const Icon(Icons.notifications_outlined, size: 36), // Large icon
+            icon: const Icon(Icons.person, size: 32),
             onPressed: () {
                Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const WelfareScreen()),
+                MaterialPageRoute(builder: (context) => const MyPageScreen()),
               );
             },
-            tooltip: '알림',
+            tooltip: '마이페이지',
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
@@ -41,8 +72,25 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // 2. Today's Welfare News (Large Card)
-              _buildWelfareCard(context),
+
+              // 2. Welfare & AI Health Check (Split Row)
+              SizedBox(
+                height: 220, // Fixed height for consistency
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Left: Welfare News
+                    Expanded(
+                      child: _buildWelfareCard(context),
+                    ),
+                    const SizedBox(width: 16),
+                    // Right: AI Health Check
+                    Expanded(
+                      child: _buildAIHealthCard(context),
+                    ),
+                  ],
+                ),
+              ),
               
               const SizedBox(height: 32),
 
@@ -120,6 +168,8 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildWelfareCard(BuildContext context) {
     return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -129,46 +179,95 @@ class HomeScreen extends StatelessWidget {
         },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Icon(Icons.star, color: Colors.orange, size: 30),
+                  const Icon(Icons.star, color: Colors.orange, size: 24),
                   const SizedBox(width: 8),
                   Text(
-                    '오늘의 복지 소식',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    '복지 소식',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Container(
-                height: 200,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(12),
-                  // image: DecorationImage(...) // TODO: Add real image
-                ),
-                alignment: Alignment.center,
-                child: const Icon(Icons.image, size: 60, color: Colors.grey),
+              const Spacer(), // Push content to center
+              const Center(
+                child: Icon(Icons.newspaper, size: 50, color: Colors.grey),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               const Text(
-                '2024년 노인 일자리 사업 참여자 모집 안내',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                maxLines: 2,
+                '2024년 노인 일자리 모집',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               const Text(
-                '신청 기간: 1월 25일 ~ 2월 10일까지\n가까운 행정복지센터에서 신청하세요.',
-                style: TextStyle(fontSize: 18),
+                '지금 신청하세요!',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
+              const Spacer(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAIHealthCard(BuildContext context) {
+    return Card(
+      elevation: 2,
+      color: Colors.blue.shade50, // Slightly distinctive background
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: () {
+           Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AIHealthCheckScreen()),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.monitor_heart, color: Colors.blue, size: 24),
+                  const SizedBox(width: 8),
+                  Text(
+                    'AI 건강 체크',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Colors.blue.shade800,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              const Center(
+                child: Icon(Icons.chat_bubble_outline, size: 50, color: Colors.blue),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '어디 불편하세요?',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'AI와 상담하기',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+              const Spacer(),
             ],
           ),
         ),

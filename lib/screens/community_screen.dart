@@ -5,8 +5,16 @@ import '../models/post_model.dart';
 import '../theme/app_theme.dart';
 import 'post_detail_screen.dart';
 
-class CommunityScreen extends StatelessWidget {
+class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
+
+  @override
+  State<CommunityScreen> createState() => _CommunityScreenState();
+}
+
+class _CommunityScreenState extends State<CommunityScreen> {
+  String _selectedCategory = '전체';
+  final List<String> _categories = ['전체', '생활의 팁', '건강', '여행', '모임', '데이케어센터', 'AI', '나눔'];
 
   @override
   Widget build(BuildContext context) {
@@ -39,43 +47,128 @@ class CommunityScreen extends StatelessWidget {
         timestamp: DateTime.now().subtract(const Duration(days: 1)),
         authorName: '이동네',
       ),
+      Post(
+        postId: '4',
+        category: '생활의 팁',
+        title: '전기요금 절약하는 꿀팁 5가지',
+        content: '사용하지 않는 플러그 뽑기, 냉장고 적정 온도 유지하기 등 생활 속 작은 실천으로...',
+        imageUrl: '',
+        timestamp: DateTime.now().subtract(const Duration(days: 2)),
+        authorName: '알뜰살림',
+      ),
+      Post(
+        postId: '5',
+        category: '여행',
+        title: '봄꽃 구경하기 좋은 서울 근교 명소',
+        content: '가볍게 다녀오기 좋은 봄꽃 명소를 추천해 드립니다. 대중교통으로도 쉽게 갈 수 있어요.',
+        imageUrl: '',
+        timestamp: DateTime.now().subtract(const Duration(days: 3)),
+        authorName: '여행지기',
+      ),
+       Post(
+        postId: '6',
+        category: '데이케어센터',
+        title: '우리 동네 데이케어센터 체험기',
+        content: '처음 가봤는데 프로그램도 다양하고 식사도 맛있네요. 추천합니다.',
+        imageUrl: '',
+        timestamp: DateTime.now().subtract(const Duration(days: 4)),
+        authorName: '김어르신',
+      ),
     ];
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('소통광장'),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: (() {
-          try {
-            return FirebaseFirestore.instance
-                .collection('posts')
-                .orderBy('timestamp', descending: true)
-                .snapshots();
-          } catch (e) {
-            // Return empty stream on error
-            return const Stream<QuerySnapshot>.empty();
-          }
-        })(),
-        builder: (context, snapshot) {
-          List<Post> postsToDisplay = [];
+      body: Column(
+        children: [
+          // Category Chips
+          SizedBox(
+            height: 60,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              scrollDirection: Axis.horizontal,
+              itemCount: _categories.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final category = _categories[index];
+                final isSelected = category == _selectedCategory;
+                return ChoiceChip(
+                  label: Text(
+                    category,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black87,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  selected: isSelected,
+                  selectedColor: AppTheme.primaryColor,
+                  backgroundColor: Colors.white,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() {
+                        _selectedCategory = category;
+                      });
+                    }
+                  },
+                );
+              },
+            ),
+          ),
+          
+          // Post List
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: (() {
+                try {
+                  Query query = FirebaseFirestore.instance.collection('posts');
+                  
+                  // Filter by category if not '전체'
+                  if (_selectedCategory != '전체') {
+                    query = query.where('category', isEqualTo: _selectedCategory);
+                  }
 
-          if (snapshot.hasData && snapshot.data != null && snapshot.data!.docs.isNotEmpty) {
-            postsToDisplay = snapshot.data!.docs.map((doc) => Post.fromFirestore(doc)).toList();
-          } else {
-            // Show dummy data if loading, empty, or error
-            postsToDisplay = dummyPosts;
-          }
+                  return query
+                      .orderBy('timestamp', descending: true)
+                      .snapshots();
+                } catch (e) {
+                  // Return empty stream on error
+                  return const Stream<QuerySnapshot>.empty();
+                }
+              })(),
+              builder: (context, snapshot) {
+                List<Post> postsToDisplay = [];
 
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: postsToDisplay.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 16),
-            itemBuilder: (context, index) {
-              return _buildPostCard(context, postsToDisplay[index]);
-            },
-          );
-        },
+                if (snapshot.hasData && snapshot.data != null && snapshot.data!.docs.isNotEmpty) {
+                  postsToDisplay = snapshot.data!.docs.map((doc) => Post.fromFirestore(doc)).toList();
+                } else {
+                  // Show dummy data if loading, empty, or error
+                  // Apply local filtering to dummy data
+                  if (_selectedCategory == '전체') {
+                     postsToDisplay = dummyPosts;
+                  } else {
+                    postsToDisplay = dummyPosts.where((post) => post.category == _selectedCategory).toList();
+                  }
+                }
+
+                if (postsToDisplay.isEmpty) {
+                  return const Center(
+                    child: Text('게시글이 없습니다.', style: TextStyle(fontSize: 18, color: Colors.grey)),
+                  );
+                }
+
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: postsToDisplay.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    return _buildPostCard(context, postsToDisplay[index]);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
