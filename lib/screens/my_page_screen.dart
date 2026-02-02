@@ -1,40 +1,125 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
+import '../services/auth_service.dart';
+import '../services/database_service.dart';
+import '../models/user_model.dart';
+import 'login_screen.dart';
 
 class MyPageScreen extends StatelessWidget {
   const MyPageScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // 로그인 상태 확인
+    final user = FirebaseAuth.instance.currentUser;
+
+    // 로그인 안 되어 있으면 로그인 화면으로 이동
+    if (user == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      });
+      
+      // 로딩 화면 표시
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // 로그인되어 있으면 마이페이지 표시
     return Scaffold(
       appBar: AppBar(
         title: const Text('마이페이지'),
+        actions: [
+          // 로그아웃 버튼
+          IconButton(
+            icon: const Icon(Icons.logout, size: 28),
+            onPressed: () async {
+              // 로그아웃 확인 다이얼로그
+              final shouldLogout = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('로그아웃', style: TextStyle(fontSize: 22)),
+                  content: const Text(
+                    '로그아웃 하시겠습니까?',
+                    style: TextStyle(fontSize: 20),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('취소', style: TextStyle(fontSize: 20)),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text('로그아웃', style: TextStyle(fontSize: 20)),
+                    ),
+                  ],
+                ),
+              );
+
+              if (shouldLogout == true && context.mounted) {
+                await AuthService().signOut();
+                if (context.mounted) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  );
+                }
+              }
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
             // Profile Section
-            Center(
-              child: Column(
-                children: [
-                  const CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.grey,
-                    child: Icon(Icons.person, size: 60, color: Colors.white),
+            // 1. 프로필 섹션 (Firestore 데이터 연동)
+            FutureBuilder<UserModel?>(
+              future: DatabaseService().getUser(user.uid),
+              builder: (context, snapshot) {
+                final String displayName = snapshot.data?.displayName ?? user.displayName ?? '사용자';
+                final String email = user.email!;
+                final int? birthYear = snapshot.data?.birthYear;
+
+                return Center(
+                  child: Column(
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.2),
+                        child: Icon(Icons.person, size: 60, color: AppTheme.primaryColor),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        displayName,
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      if (birthYear != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          '${DateTime.now().year - birthYear + 1}세 ($birthYear년생)',
+                          style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      Text(
+                        email,
+                        style: const TextStyle(fontSize: 18, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        '오늘도 건강한 하루 되세요!',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    '김어르신 님',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '오늘도 건강한 하루 되세요!',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
             const SizedBox(height: 32),
 

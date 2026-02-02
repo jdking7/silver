@@ -4,7 +4,7 @@ import '../models/post_model.dart';
 import '../theme/app_theme.dart';
 
 class PostDetailScreen extends StatelessWidget {
-  final Post post;
+  final PostModel post;
 
   const PostDetailScreen({super.key, required this.post});
 
@@ -39,7 +39,7 @@ class PostDetailScreen extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  DateFormat('yyyy-MM-dd HH:mm').format(post.timestamp),
+                  DateFormat('yyyy-MM-dd HH:mm').format(post.createdAt),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.textSecondaryColor,
                   ),
@@ -47,28 +47,6 @@ class PostDetailScreen extends StatelessWidget {
               ],
             ),
             const Divider(height: 32, thickness: 1),
-
-            // Image
-            if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 24.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    post.imageUrl!,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        height: 200,
-                        color: Colors.grey[300],
-                        alignment: Alignment.center,
-                        child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                      );
-                    },
-                  ),
-                ),
-              ),
 
             // Content
             Text(
@@ -79,12 +57,19 @@ class PostDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 40),
             
-            // Action Buttons (Like / Comment placeholders)
+            // Action Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildActionButton(Icons.thumb_up_alt_outlined, "공감해요", () {}),
-                _buildActionButton(Icons.comment_outlined, "댓글달기", () {}),
+                _buildActionButton(Icons.thumb_up_alt_outlined, "공감 ${post.likesCount}", () {
+                  // TODO: 좋아요 기능 구현
+                }),
+                _buildActionButton(Icons.comment_outlined, "댓글달기", () {
+                  // TODO: 댓글 흐름 구현
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('댓글 기능은 준비 중입니다.')),
+                  );
+                }),
               ],
             ),
           ],
@@ -99,7 +84,7 @@ class PostDetailScreen extends StatelessWidget {
       icon: Icon(icon, size: 28),
       label: Text(label),
       style: ElevatedButton.styleFrom(
-        minimumSize: const Size(140, 56), // Slightly smaller than main buttons but still large
+        minimumSize: const Size(140, 56), 
       ),
     );
   }

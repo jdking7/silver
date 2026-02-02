@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/database_service.dart';
+import '../models/user_model.dart';
 import 'community_screen.dart';
 import 'welfare_screen.dart';
 import 'jobs_screen.dart';
@@ -13,6 +16,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
     return Scaffold(
       appBar: AppBar(
         title: const Text('온고지신'),
@@ -66,9 +70,15 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // 1. Greeting
-              Text(
-                '안녕하세요, 김어르신님!',
-                style: Theme.of(context).textTheme.headlineMedium,
+              FutureBuilder<UserModel?>(
+                future: DatabaseService().getUser(user?.uid ?? ''),
+                builder: (context, snapshot) {
+                  final displayName = snapshot.data?.displayName ?? user?.displayName ?? '어르신';
+                  return Text(
+                    '안녕하세요, $displayName님!',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  );
+                },
               ),
               const SizedBox(height: 24),
 
